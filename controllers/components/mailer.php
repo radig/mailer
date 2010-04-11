@@ -144,7 +144,14 @@ class MailerComponent extends Object
 			return FALSE;
 		}
 		
-		$this->message->setBody($this->__render($value));
+		if($this->options['contentType'] == 'html')
+		{
+			$this->message->setBody($this->__render($value), 'text/html');
+		}
+		else
+		{
+			$this->message->setBody($this->__render($value), 'text/plain');
+		}
 		
 		return TRUE;
 	}
@@ -234,10 +241,27 @@ class MailerComponent extends Object
 			$status = ($status && $this->message->setBcc($options['bcc']));
 		}
 		
+		// define subject
+		if(isset($options['subject']))
+		{
+			$status = ($status && $this->setMessageSubject($options['subject']));
+		}
+		
 		// define message content
 		if(isset($options['body']))
 		{
 			$status = ($status && $this->setMessageBody($options['body']));
+		}
+		
+		// define message content type
+		switch($this->options['contentType'])
+		{
+			case 'html':
+				$this->message->setContentType('text/html');
+				break;
+			case 'text':
+				$this->message->setContentType('text/plain');
+				break;
 		}
 		
 		return $status;
