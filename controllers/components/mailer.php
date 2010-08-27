@@ -13,29 +13,49 @@ class MailerComponent extends Object
 	protected $message = null;
 	
 	public $failures = array();
-	
+
+	/**
+	 * Array com opções de configuração para o Component, possuindo os seguintes índices:
+	 * 
+	 * - transport: php {php|sendmail|smtp}
+	 * - smtp: array {configuração do SMTP, caso seja o transport utilizado}
+	 *   - port: 25 {defina a porta usada para conexão SMTP}
+	 *   - host: localhost {define o host do servidor SMTP}
+	 *   - encryptation: false {false|tls|ssl}
+	 * - sendmail: array {configuração do Sendmail, caso seja o transport utilizado}
+	 *   - path: /usr/sbin/sendmail {local com o binário do sendmail}
+	 *   - params: '' {parâmetros que serão passados ao sendmail}
+	 * - batch: true {true|false}
+	 * - contentType: html {text|html}
+	 * - template: default {nome da pasta com template desejado}
+	 * - layout: default {nome do layout desejado}
+	 * - confirmReceipt: false {true|false}, pede confirmação de leitura dos destinatários
+	 *
+	 * @var array
+	 */
 	protected $options = array(
-		'transport' => 'php', //valid options are: php, sendmail and smtp
-		'batch' => true, // if use batch send mode or not
-		'contentType' => 'html', //valid options are: html and text
-		'template' => 'default', // path for body theme
-		'layout' => 'default',
+		'transport' => 'php',
 		'smtp' => array(
 			'port' => 25,
 			'host' => 'localhost',
-			'encryption' => false // valid options are: false, 'tls' and 'ssl'
+			'encryption' => false
 		),
 		'sendmail' => array(
 			'path' => '/usr/sbin/sendmail',
 			'params' => ''
-		) 
+		),
+		'batch' => true,
+		'contentType' => 'html',
+		'template' => 'default',
+		'layout' => 'default',
+		'confirmReceipt' => false
 	);
 	
-	//called before Controller::beforeFilter()
-	function initialize($controller, $settings = array())
+	// executado antes de Controller::beforeFilter()
+	function initialize(&$controller, $settings = array())
 	{
-		// saving the controller reference for later use
-		$this->controller = $controller;
+		// salva referência do controlador para uso futuro
+		$this->controller =& $controller;
 		
 		$this->options = Set::merge($this->options, $settings);
 		
@@ -46,31 +66,19 @@ class MailerComponent extends Object
 			$this->template = $this->options['template'];
 	}
 
-	//called after Controller::beforeFilter()
-	function startup(&$controller)
-	{
-	}
+	/************** Begin callbacks section ***************/
 
-	//called after Controller::beforeRender()
-	function beforeRender(&$controller)
-	{
-	}
+	// executado após Controller::beforeFilter()
+	function startup(&$controller) {}
 
-	//called after Controller::render()
-	function shutdown(&$controller)
-	{
-	}
+	// executado antes de Controller::beforeRender()
+	function beforeRender(&$controller) {}
 
-	//called before Controller::redirect()
-	function beforeRedirect(&$controller, $url, $status=null, $exit=true)
-	{
-	}
+	// executado após Controller::render()
+	function shutdown(&$controller)	{}
 
-	function redirectSomewhere($value)
-	{
-		// utilizing a controller method
-		$this->controller->redirect($value);
-	}
+	// executado antes de Controller::redirect()
+	function beforeRedirect(&$controller, $url, $status=null, $exit=true) {}
 	
 	/************** End callbacks section ***************/
 	
@@ -80,13 +88,15 @@ class MailerComponent extends Object
 	/**
 	 * Send one or more message
 	 * 
-	 * @param array $options
-	 * 	Valid optionas are:
-	 * 	'to' - string or array with destiny mail address - REQUIRED
-	 * 	'from' - string with sender mail address - REQUIRED
-	 * 	'cc' - string or array with destiny mail address - OPTIONAL
-	 *  'bcc' - string or array with destiny mail address - OPTIONAL
-	 *  'body' - string - OPTIONAL
+	 * @param array $options índices válidos são:
+	 * 	 - 'to': string ou array com endereços de email do destinatário - REQUIRED
+	 * 	 - 'from': string com email do remetente - REQUIRED
+	 * 	 - 'cc': string ou array com endereços de email das cópias - OPTIONAL
+	 *   - 'bcc': string ou array com endereços de email das cópias ocultas - OPTIONAL
+	 *   - 'body': string - OPTIONAL
+	 *   - 'attachments': array
+	 *     - 'path': string
+	 *     - 'type': string
 	 *  
 	 * @return bool
 	 */
@@ -116,11 +126,16 @@ class MailerComponent extends Object
 		else
 			return $this->sender->send($this->message, $this->failures);
 	}
-	
 	/**************** End utils funcions ****************/
 	
 	
 	/****************** Begin setters *******************/
+
+	/**
+	 *
+	 * @param string $value
+	 * @return bool
+	 */
 	public function setMessageSubject($value)
 	{
 		if($this->message === null)
@@ -134,7 +149,12 @@ class MailerComponent extends Object
 		
 		return TRUE;
 	}
-	
+
+	/**
+	 *
+	 * @param string $value
+	 * @return bool
+	 */
 	public function setMessageBody($value)
 	{
 		if($this->message === null)
@@ -155,7 +175,12 @@ class MailerComponent extends Object
 		
 		return TRUE;
 	}
-	
+
+	/**
+	 *
+	 * @param string $value
+	 * @return bool
+	 */
 	public function setMessagePart($value)
 	{
 		if($this->message === null)
@@ -169,11 +194,15 @@ class MailerComponent extends Object
 		
 		return TRUE;
 	}
-	
 	/******************* End setters *********************/
-	
+
+
 	/*************** Begin internal utils ****************/
-	
+
+	/**
+	 *
+	 * @return bool
+	 */
 	private function __initMessage()
 	{
 		if($this->message === null)
@@ -187,9 +216,9 @@ class MailerComponent extends Object
 	}
 	
 	/**
-	 * Set all passed options wich a message property
-	 * If a proport is Required, but not defined in $options, method abort and return FALSE
-	 * ELSE return TRUE
+	 * Define todas as opções fornecidas como propriedades da mensagem
+	 * Se uma propriedade é Obrigatório, mas não está definida em $options, o método
+	 * aborta e retorna FALSE, caso contrário, retorna TRUE
 	 * 
 	 * @param array $options - REQUIRED
 	 * @return bool
@@ -205,7 +234,7 @@ class MailerComponent extends Object
 			return FALSE;
 		}
 		
-		// define destiny mail
+		// define destinatário do email
 		if(isset($options['to']))
 		{
 			$this->message->setTo($options['to']);
@@ -217,10 +246,16 @@ class MailerComponent extends Object
 			return FALSE;
 		}
 		
-		// define origin mail
+		// define origem do email
 		if(isset($options['from']))
 		{
 			$this->message->setFrom($options['from']);
+
+			// define se será solicitado um email confirmando leitura
+			if($options['confirmReceipt'])
+			{
+				$this->message->setReadReceiptTo($options['from']);
+			}
 		}
 		else
 		{
@@ -229,31 +264,31 @@ class MailerComponent extends Object
 			return FALSE;
 		}
 		
-		// define carbon-copy mails
+		// define email's que receberam cópia-carbono
 		if(isset($options['cc']))
 		{
 			$status = ($status && $this->message->setCc($options['cc']));
 		}
 		
-		// define blind carbon-copy mails
+		// define email's que receberam cópia-carbono oculta
 		if(isset($options['bcc']))
 		{
 			$status = ($status && $this->message->setBcc($options['bcc']));
 		}
 		
-		// define subject
+		// define o assunto
 		if(isset($options['subject']))
 		{
 			$status = ($status && $this->setMessageSubject($options['subject']));
 		}
 		
-		// define message content
+		// define conteúdo da mensagem
 		if(isset($options['body']))
 		{
 			$status = ($status && $this->setMessageBody($options['body']));
 		}
 		
-		// define message content type
+		// define tipo do conteúdo da mensagem
 		switch($this->options['contentType'])
 		{
 			case 'html':
@@ -263,13 +298,42 @@ class MailerComponent extends Object
 				$this->message->setContentType('text/plain');
 				break;
 		}
+
+		// adiciona anexos a mensagem, se houver algum
+		if(is_array($this->options['attachments']) && !empty($this->options['attachments']))
+		{
+			$status = ($status && $this->__attachFiles($options['attachments']));
+		}
 		
 		return $status;
 	}
+
+	/**
+	 *
+	 * @param array $attachments
+	 */
+	private function __attachFiles($attachments = array())
+	{
+		foreach($attachments as $attach)
+		{
+			if(isset($attach['path']) && isset($attach['type']))
+			{
+				$this->message->attach(Swift_Attachment::fromPath($attach['path'], $attach['type']));
+			}
+			else
+			{
+				trigger_error(__('Algum anexo foi passado incorretamente.', true), E_USER_ERROR);
+				
+				return false;
+			}
+		}
+
+		return true;
+	}
 	
 	/**
-	 * Get from Mailer::options transport related params and
-	 * init a Swift_Transport class
+	 * Recupera parâmetros relacionados ao transporte em Mailer::options
+	 * e inicia a class Swift_Transport
 	 * 
 	 * @return bool
 	 */
