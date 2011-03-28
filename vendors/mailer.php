@@ -4,13 +4,13 @@
  */
 require_once('plugins' . DS . 'mailer' . DS . 'vendors' . DS . 'swiftmailer' . DS . 'lib' . DS . 'swift_required.php');
 
-class MailerComponent extends Object
+class Mailer extends Object
 {
-	protected $controller = null;
-	
 	protected $sender = null;
 	
 	protected $message = null;
+	
+	protected $Controller = null;
 	
 	public $failures = array();
 
@@ -51,13 +51,16 @@ class MailerComponent extends Object
 		'confirmReceipt' => false
 	);
 	
-	// executado antes de Controller::beforeFilter()
-	function initialize(&$controller, $settings = array())
+	// construtor default
+	public function __construct($settings = array())
 	{
-		// salva referência do controlador para uso futuro
-		$this->controller =& $controller;
-		
-		$this->options = Set::merge($this->options, $settings);
+		$this->setOptions($settings);
+	}
+	
+	// seta as configurações
+	public function setOptions($options)
+	{
+		$this->options = Set::merge($this->options, $options);
 		
 		if($this->options['layout'])
 			$this->layout = $this->options['layout'];
@@ -65,25 +68,8 @@ class MailerComponent extends Object
 		if($this->options['template'])
 			$this->template = $this->options['template'];
 			
-		$this->message = Swift_Message::newInstance();
+		
 	}
-
-	/************** Begin callbacks section ***************/
-
-	// executado após Controller::beforeFilter()
-	function startup(&$controller) {}
-
-	// executado antes de Controller::beforeRender()
-	function beforeRender(&$controller) {}
-
-	// executado após Controller::render()
-	function shutdown(&$controller)	{}
-
-	// executado antes de Controller::redirect()
-	function beforeRedirect(&$controller, $url, $status=null, $exit=true) {}
-	
-	/************** End callbacks section ***************/
-	
 	
 	/*************** Begin utils funcions ***************/ 
 	
@@ -132,6 +118,39 @@ class MailerComponent extends Object
 	
 	
 	/****************** Begin setters *******************/
+	
+	/**
+	 * Habilita o plugin AntiFlood que permite interromper
+	 * o envio de mensagens inserindo uma pausa quando
+	 * for ultrapassado determinado limite.
+	 * 
+	 * @param int $limit limite de envio em sequência
+	 * @param int $pause tempo de pausa em segundos
+	 */
+	public function enableAntiFlood($limit = 100, $pause = 30)
+	{
+		$this->sender->registerPlugin(new Swift_Plugins_AntiFloodPlugin($limit, $pause));
+	}
+	
+	/**
+	 * Habilita o plugin Throttler que permite controlar
+	 * a velocidade de envio das mensagens
+	 * 
+	 * @param int $limit Limite de mensagens ou bytes
+	 * @param string $type Tipo de limite, valores válidos são: 'message' e 'bytes'
+	 * 
+	 */
+	public function enableThrottler($limit = 100, $type = 'message')
+	{
+		if($type === 'message')
+		{
+			$this->sender->registerPlugin(new Swift_Plugins_ThrottlerPlugin($limit, Swift_Plugins_ThrottlerPlugin::MESSAGES_PER_MINUTE));
+		}
+		else
+		{
+			$this->sender->registerPlugin(new Swift_Plugins_ThrottlerPlugin($limit, Swift_Plugins_ThrottlerPlugin::BYTES_PER_MINUTE));
+		}
+	}
 
 	/**
 	 *
@@ -157,7 +176,7 @@ class MailerComponent extends Object
 	 * @param string $value
 	 * @return bool
 	 */
-	public function setMessageBody($value)
+	public function setMessageBody($value, $replacements = array())
 	{
 		if($this->message === null)
 		{
@@ -165,6 +184,9 @@ class MailerComponent extends Object
 			
 			return FALSE;
 		}
+		
+		$decorator = new Swift_Plugins_DecoratorPlugin($replacements);
+		$this->sender->registerPlugin($decorator);
 		
 		if($this->options['contentType'] == 'html')
 		{
@@ -243,9 +265,12 @@ class MailerComponent extends Object
 		}
 		else
 		{
-			trigger_error(__('É preciso definir o destinatário da mensagem', TRUE), E_USER_ERROR);
+			if(!isset($options['bcc']) && !isset($options['cc']))
+			{
+				trigger_error(__('É preciso definir o destinatário da mensagem', TRUE), E_USER_ERROR);
 			
-			return FALSE;
+				return FALSE;
+			}
 		}
 		
 		// define origem do email
@@ -254,7 +279,7 @@ class MailerComponent extends Object
 			$this->message->setFrom($options['from']);
 
 			// define se será solicitado um email confirmando leitura
-			if($options['confirmReceipt'])
+			if(!empty($options['confirmReceipt']))
 			{
 				$this->message->setReadReceiptTo($options['from']);
 			}
@@ -287,7 +312,14 @@ class MailerComponent extends Object
 		// define conteúdo da mensagem
 		if(isset($options['body']))
 		{
-			$status = ($status && $this->setMessageBody($options['body']));
+			if(isset($options['replacements']))
+			{
+				$status = ($status && $this->setMessageBody($options['body'], $options['replacements']));
+			}
+			else
+			{
+				$status = ($status && $this->setMessageBody($options['body']));
+			}
 		}
 		
 		// define tipo do conteúdo da mensagem
@@ -302,7 +334,7 @@ class MailerComponent extends Object
 		}
 
 		// adiciona anexos a mensagem, se houver algum
-		if(is_array($this->options['attachments']) && !empty($this->options['attachments']))
+		if(!empty($this->options['attachments']) && is_array($this->options['attachments']))
 		{
 			$status = ($status && $this->__attachFiles($options['attachments']));
 		}
@@ -339,26 +371,36 @@ class MailerComponent extends Object
 	 * 
 	 * @return bool
 	 */
-	private function __configureTransport()
+	private function __configureTransport($override = false)
 	{
+		if(!$override && $this->sender !== null)
+		{
+			return $this->sender;
+		}
+		
 		if($this->options['transport'] == 'smtp')
 		{
-			$transport =
-				Swift_SmtpTransport::newInstance($this->options['smtp']['host'], $this->options['smtp']['port']);
+			if(!empty($this->options['smtp']['encryption']))
+			{
+				$transport =
+					Swift_SmtpTransport::newInstance($this->options['smtp']['host'], $this->options['smtp']['port'], $this->options['smtp']['encryption']);
+			}
+			else 
+			{
+				$transport =
+					Swift_SmtpTransport::newInstance($this->options['smtp']['host'], $this->options['smtp']['port']);
+			}
 				
 			if(isset($this->options['smtp']['username']))
 				$transport->setUsername($this->options['smtp']['username']);
 				
 			if(isset($this->options['smtp']['password']))
 				$transport->setPassword($this->options['smtp']['password']);
-				
-			if($this->options['smtp']['encryption'])
-				$transport->setEncryption($this->options['smtp']['encryption']);
 		}
 		else if($this->options['transport'] == 'sendmail')
 		{
 			$transport =
-				Swift_SendmailTransport::newInstance($this->options['sendmail']['path'] . $this->options['sendmail']['params']);
+				Swift_SendmailTransport::newInstance($this->options['sendmail']['path'] . ' ' . $this->options['sendmail']['params']);
 		}
 		else if($this->options['transport'] == 'php')
 		{
@@ -385,7 +427,8 @@ class MailerComponent extends Object
 	 * @subpackage cake.libs.controllers.components.email
 	 * @license MIT
 	 * 
-	 * @param string $content Content to render
+	 * @param string $content Conteúdo que será renderizado
+	 * 
 	 * @return array Email ready to be sent
 	 * @access private
 	 */
@@ -393,16 +436,12 @@ class MailerComponent extends Object
 	{
 		$body = '';
 		
-		$viewClass = $this->controller->view;
+		App::import('Core', array('View', 'Controller'));
 		
-		if ($viewClass != 'View')
-		{
-			list($plugin, $viewClass) = pluginSplit($viewClass);
-			$viewClass = $viewClass . 'View';
-			App::import('View', $this->controller->view);
-		}
-
-		$View = new $viewClass($this->controller, true);
+		$this->Controller = new Controller();
+		
+		$View = new View($this->Controller, false);
+		
 		$View->layout = $this->layout;
 		
 		if (is_array($content))
@@ -430,4 +469,3 @@ class MailerComponent extends Object
 		return $body;
 	}
 }
-?>
