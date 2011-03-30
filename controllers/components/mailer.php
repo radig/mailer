@@ -254,7 +254,7 @@ class MailerComponent extends Object
 			$this->message->setFrom($options['from']);
 
 			// define se será solicitado um email confirmando leitura
-			if($options['confirmReceipt'])
+			if($this->options['confirmReceipt'])
 			{
 				$this->message->setReadReceiptTo($options['from']);
 			}
@@ -302,7 +302,7 @@ class MailerComponent extends Object
 		}
 
 		// adiciona anexos a mensagem, se houver algum
-		if(is_array($this->options['attachments']) && !empty($this->options['attachments']))
+		if(is_array($options['attachments']) && !empty($options['attachments']))
 		{
 			$status = ($status && $this->__attachFiles($options['attachments']));
 		}
