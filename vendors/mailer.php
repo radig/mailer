@@ -4,6 +4,8 @@
  */
 require_once('plugins' . DS . 'mailer' . DS . 'vendors' . DS . 'swiftmailer' . DS . 'lib' . DS . 'swift_required.php');
 
+App::import('Core', 'View');
+
 class Mailer extends Object
 {
 	protected $sender = null;
@@ -52,9 +54,14 @@ class Mailer extends Object
 	);
 	
 	// construtor default
-	public function __construct($settings = array())
+	public function __construct($settings = array(), $controller = null)
 	{
 		$this->setOptions($settings);
+		
+		if($controller !== null)
+		{
+			$this->Controller = $controller;
+		}
 	}
 	
 	// seta as configurações
@@ -334,7 +341,7 @@ class Mailer extends Object
 		}
 
 		// adiciona anexos a mensagem, se houver algum
-		if(!empty($this->options['attachments']) && is_array($this->options['attachments']))
+		if(!empty($options['attachments']) && is_array($options['attachments']))
 		{
 			$status = ($status && $this->__attachFiles($options['attachments']));
 		}
@@ -436,11 +443,23 @@ class Mailer extends Object
 	{
 		$body = '';
 		
-		App::import('Core', array('View', 'Controller'));
+		if($this->Controller === null)
+		{
+			App::import('Core', 'Controller');
+			
+			$this->Controller = new Controller();
+		}
 		
-		$this->Controller = new Controller();
+		$viewClass = $this->Controller->view;
 		
-		$View = new View($this->Controller, false);
+		if ($this->Controller->view != 'View')
+		{
+			list($plugin, $viewClass) = pluginSplit($viewClass);
+			$viewClass = $viewClass . 'View';
+			App::import('View', $this->Controller->view);
+		}
+		
+		$View =& new $viewClass($this->Controller);
 		
 		$View->layout = $this->layout;
 		
@@ -463,7 +482,7 @@ class Mailer extends Object
 			
 			$body = $View->element('email' . DS . 'text' . DS . $this->template, array('content' => $content), true);
 
-			$body = str_replace(array("\r\n", "\r"), "\n", $View->renderLayout($content));
+			$body = str_replace(array("\r\n", "\r"), "\n", $View->renderLayout($body));
 		}
 		
 		return $body;
