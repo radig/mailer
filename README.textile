@@ -1,0 +1,11 @@
+h1. Radig Mailer
+
+Este plugin fornece uma lib e um componente seguindo as conveções do CakePHP para utilização do biblioteca de email SwiftMailer
+
+h2. Autor e Copyright
+
+* *Copyright 2011,* "*Radig - Soluções em TI*":http://www.radig.com.br
+* Licença MIT - Isto quer dizer que o código está disponível sem nenhuma garantia, ao mesmo tempo que
+você pode usa-lo de forma isolada ou em conjunto com seu próprio código, execeto onde tiver explícito o contrário.
+
+* A biblioteca "SwiftMailer":http://swiftmailer.org possui licença LGPL, e todos os seus direitos são reservados à "Chris Corbyn":http://swiftmailer.org
