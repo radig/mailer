@@ -2,6 +2,42 @@ h1. Radig Mailer
 
 Este plugin fornece uma lib e um componente seguindo as conveções do CakePHP para utilização do biblioteca de email SwiftMailer
 
+h2. Instalação
+
+Basta clonar o repositório ou salvar os arquivos descompactados dentro da pasta _plugins_ da sua aplicação.
+
+Para uso como componente, você deve adicionar a lista de componentes do seu controlador a seguinte entrada:
+
+bc. 'Mailer.Mailer'
+
+Já para uso direto da lib (em um modelo, shell ou outra parte da aplicação), você deve fazer a importação da classe
+
+bc. App::import('Vendor', 'Mailer.Mailer');
+
+E então instanciar a classe
+
+bc. $mailer = new Mailer($opcoes);
+
+Onde $opcoes deve ser um array com as configurações da biblioteca.
+
+Você pode especificar qualquer uma das opções neste array:
+
+* transport: php {php|sendmail|smtp}
+* smtp: array {configuração do SMTP, caso seja o transporte utilizado}
+** port: 25 {defina a porta usada para conexão SMTP}
+** host: localhost {define o host do servidor SMTP}
+** encryptation: false {false|tls|ssl}
+* sendmail: array {configuração do Sendmail, caso seja o transport utilizado}
+** path: /usr/sbin/sendmail {local com o binário do sendmail}
+** params: '' {parâmetros que serão passados ao sendmail}
+* batch: true {true|false}
+* contentType: html {text|html}
+* template: default {nome da pasta com template desejado}
+* layout: default {nome do layout desejado}
+* confirmReceipt: false {true|false}, pede confirmação de leitura dos destinatários
+
+As opções entre chaves representam os valores possíveis, enquanto o valor antes das chaves são os valores padrões (default).
+
 h2. Autor e Copyright
 
 * *Copyright 2011,* "*Radig - Soluções em TI*":http://www.radig.com.br
