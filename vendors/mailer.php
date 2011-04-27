@@ -475,6 +475,8 @@ class Mailer extends Object
 			$body = $View->element('email' . DS . 'html' . DS . $this->template, array('content' => $content), true);
 			
 			$body = str_replace(array("\r\n", "\r"), "\n", $View->renderLayout($body));
+			
+			$body = $this->__embedImages($body);
 		}
 		else if ($this->options['contentType'] === 'text')
 		{
@@ -486,5 +488,34 @@ class Mailer extends Object
 		}
 		
 		return $body;
+	}
+	
+	/**
+	 * Recebe uma string com o conteúdo da mensagem e retorna
+	 * a string com as imagens encontradas por equivalentes na forma
+	 * de 'anexo' inline
+	 * 
+	 * @param string $content
+	 * 
+	 * @return string $content
+	 */
+	private function __embedImages($content)
+	{
+		$dom = new DOMDocument();
+		
+		$dom->loadHtml($content);
+		
+		$imgs = $dom->getElementsByTagName('img');
+		
+		foreach($imgs as $img)
+		{
+			$src = Swift_Image::fromPath($img->getAttribute('src'));
+			
+			$img->setAttribute('src', $this->message->embed($src));
+		}
+		
+		$content = $dom->saveHTML();
+		
+		return $content;
 	}
 }
