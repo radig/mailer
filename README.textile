@@ -30,7 +30,6 @@ Você pode especificar qualquer uma das opções neste array:
 * sendmail: array {configuração do Sendmail, caso seja o transport utilizado}
 ** path: /usr/sbin/sendmail {local com o binário do sendmail}
 ** params: '' {parâmetros que serão passados ao sendmail}
-* batch: true {true|false}
 * contentType: html {text|html}
 * template: default {nome da pasta com template desejado}
 * layout: default {nome do layout desejado}
