@@ -362,6 +362,10 @@ class Mailer extends Object
 			{
 				$this->message->attach(Swift_Attachment::fromPath($attach['path'], $attach['type']));
 			}
+			else if(isset($attach['path']))
+			{
+				$this->message->attach(Swift_Attachment::fromPath($attach['path']));
+			}
 			else
 			{
 				trigger_error(__('Algum anexo foi passado incorretamente.', true), E_USER_ERROR);
