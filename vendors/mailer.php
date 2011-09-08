@@ -351,8 +351,12 @@ class Mailer extends Object
 	}
 
 	/**
-	 *
+	 * Adiciona anexos à mensagem
 	 * @param array $attachments
+	 * 		path: caminho para o arquivo
+	 * 		type: mime type do arquivo
+	 * 		content: conteudo do arquivo (no anexo de conteúdo dinâmico)
+	 * 		filename: nome do arquivo de conteúdo dinâmico que será anexado â mensagem
 	 */
 	private function __attachFiles($attachments = array())
 	{
@@ -366,10 +370,13 @@ class Mailer extends Object
 			{
 				$this->message->attach(Swift_Attachment::fromPath($attach['path']));
 			}
+			else if(isset($attach['content']) && isset($attach['type']) && isset($attach['filename']))
+			{
+				$this->message->attach(Swift_Attachment::newInstance($attach['content'], $attach['filename'], $attach['type']));
+			}
 			else
 			{
 				trigger_error(__('Algum anexo foi passado incorretamente.', true), E_USER_ERROR);
-
 				return false;
 			}
 		}
