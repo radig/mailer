@@ -43,7 +43,7 @@ class Mailer extends Object
 		),
 		'sendmail' => array(
 			'path' => '/usr/sbin/sendmail',
-			'params' => ''
+			'params' => '-bs'
 		),
 		'contentType' => 'html',
 		'template' => 'default',
