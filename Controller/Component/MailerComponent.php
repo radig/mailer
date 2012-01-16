@@ -1,20 +1,49 @@
 <?php
 App::import('Vendor', 'Mailer.Mailer');
 
-class MailerComponent extends Object
+/**
+ * Componente que constrói um Menu baseado nas permissões
+ * do usuário.
+ * 
+ * @package		radig.Menu.Controller.Component
+ * @copyright		Radig Soluções em TI
+ * @author			Radig Dev Team - suporte@radig.com.br
+ * @version		2.0
+ * @license		Vide arquivo LICENCA incluído no pacote
+ * @link			http://radig.com.br
+ */
+class MailerComponent extends Component
 {
 	protected $Controller = null;
 	
 	protected $_Mailer = null;
 	
-	// executado antes de Controller::beforeFilter()
-	public function initialize(&$controller, $settings = array())
+	/**
+	 * Construtor padrão
+	 * 
+	 * @param ComponentCollection $collection
+	 * @param array $settings
+	 */
+	public function __construct(ComponentCollection $collection, $settings = array())
+	{
+		parent::__construct($collection, $settings);
+		
+		$this->settings = $settings;
+	}
+	
+	/**
+	 * Inicialização do componente
+	 * 
+	 * @param Controller $controller
+	 * @param array $settings
+	 */
+	public function initialize(&$controller)
 	{
 		// salva referência do controlador para uso futuro
 		$this->Controller =& $controller;
 		
 		// instância a lib de envio de mensagem
-		$this->_Mailer = new Mailer($settings, $this->Controller);
+		$this->_Mailer = new Mailer($this->settings, $this->Controller);
 	}
 	
 	/**

@@ -1,10 +1,7 @@
 <?php
-/**
- * @FIXME utilizar a classe App para importar a lib externa
- */
-require_once('plugins' . DS . 'mailer' . DS . 'vendors' . DS . 'swiftmailer' . DS . 'lib' . DS . 'swift_required.php');
+require_once(APP . 'Plugin' . DS . 'Mailer' . DS . 'Vendor' . DS . 'swiftmailer' . DS . 'lib' . DS . 'swift_required.php');
 
-App::import('Core', 'View');
+App::uses('View', 'View');
 
 class Mailer extends Object
 {
