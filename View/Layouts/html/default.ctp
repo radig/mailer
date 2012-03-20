@@ -9,8 +9,7 @@
 
 	<p>Email entregue utilizando o Plugin Mailer
 	<br />
-	<a href="http://phpms.lighthouse.com/comitiva">Comitiva</a>, sistema de gerenciamento de eventos do <a href="http://www.phpms.org">PHPMS</a>.
-	<br />
+	
 	Sistema construído usando <a href="http://cakephp.org">CakePHP Framework</a></p>
 </body>
 </html>
