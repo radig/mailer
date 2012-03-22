@@ -1,5 +1,5 @@
 <?php
-App::import('Vendor', 'Mailer.Mailer');
+App::uses('Mailer', 'Mailer.Vendor');
 
 /**
  * Componente que constrói um Menu baseado nas permissões
