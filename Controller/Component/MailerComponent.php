@@ -1,10 +1,9 @@
 <?php
 App::uses('Mailer', 'Mailer.Vendor');
-
 /**
  * Componente que constrói um Menu baseado nas permissões
  * do usuário.
- * 
+ *
  * @package		radig.Menu.Controller.Component
  * @copyright		Radig Soluções em TI
  * @author			Radig Dev Team - suporte@radig.com.br
@@ -15,25 +14,25 @@ App::uses('Mailer', 'Mailer.Vendor');
 class MailerComponent extends Component
 {
 	protected $Controller = null;
-	
+
 	protected $_Mailer = null;
-	
+
 	/**
 	 * Construtor padrão
-	 * 
+	 *
 	 * @param ComponentCollection $collection
 	 * @param array $settings
 	 */
 	public function __construct(ComponentCollection $collection, $settings = array())
 	{
 		parent::__construct($collection, $settings);
-		
+
 		$this->settings = $settings;
 	}
-	
+
 	/**
 	 * Inicialização do componente
-	 * 
+	 *
 	 * @param Controller $controller
 	 * @param array $settings
 	 */
@@ -41,14 +40,14 @@ class MailerComponent extends Component
 	{
 		// salva referência do controlador para uso futuro
 		$this->Controller =& $controller;
-		
+
 		// instância a lib de envio de mensagem
-		$this->_Mailer = new Mailer($this->settings, $this->Controller);
+		$this->_Mailer = new Mailer($this->settings);
 	}
-	
+
 	/**
 	 * @see Mailer.Vendor.Mailer
-	 * 
+	 *
 	 * @param array $options
 	 */
 	public function setOptions($options)
@@ -69,15 +68,15 @@ class MailerComponent extends Component
 
 	// executado antes de Controller::redirect()
 	public function beforeRedirect(&$controller, $url, $status=null, $exit=true) {}
-	
+
 	/************** End callbacks section ***************/
-	
-	
-	/*************** Begin utils funcions ***************/ 
-	
+
+
+	/*************** Begin utils funcions ***************/
+
 	/**
 	 * Send one or more message
-	 * 
+	 *
 	 * @param array $options índices válidos são:
 	 * 	 - 'to': string ou array com endereços de email do destinatário - REQUIRED
 	 * 	 - 'from': string com email do remetente - REQUIRED
@@ -87,7 +86,7 @@ class MailerComponent extends Component
 	 *   - 'attachments': array
 	 *     - 'path': string
 	 *     - 'type': string
-	 *  
+	 *
 	 * @return bool
 	 */
 	public function sendMessage($options = array())

@@ -1,19 +1,61 @@
 <?php
-require_once(APP . 'Plugin' . DS . 'Mailer' . DS . 'Vendor' . DS . 'swiftmailer' . DS . 'lib' . DS . 'swift_required.php');
-
+require_once(__DIR__ . DS . 'swiftmailer' . DS . 'lib' . DS . 'swift_required.php');
 App::uses('View', 'View');
+/**
+ * Biblioteca que funciona como um Wrapper para uso
+ * do SwiftMailer junto ao CakePHP.
+ *
+ * Suporta versão 2.x do CakePHP
+ *
+ * @copyright  Radig Soluções em Ti (http://radig.com.br)
+ * @license  MIT License
+ */
 class Mailer extends Object
 {
+	/**
+	 * Instância da classe SwiftMailer
+	 *
+	 * @var Swift_Mailer
+	 */
 	protected $sender = null;
 
+	/**
+	 * Instância da classe Swift_Message
+	 *
+	 * @var Swift_Message
+	 */
 	protected $message = null;
 
-	protected $Controller = null;
-
+	/**
+	 * Layout que será usado na renderização
+	 * do corpo do email.
+	 *
+	 * @var string
+	 */
 	protected $layout = 'default';
 
+	/**
+	 * Template que será usado na renderização
+	 * do corpo do email.
+	 *
+	 * @var string
+	 */
 	protected $template = null;
 
+	/**
+	 * Variáveis que ficaram disponíveis
+	 * para a View.
+	 *
+	 * @var array
+	 */
+	protected $viewVars = array();
+
+	/**
+	 * Registro das falhas ocorridas no
+	 * último envio de mensagens.
+	 *
+	 * @var array
+	 */
 	public $failures = array();
 
 	/**
@@ -37,16 +79,20 @@ class Mailer extends Object
 	public $options = array();
 
 
-	// construtor default
-	public function __construct($settings = array(), $controller = null)
+	/**
+	 * construtor default
+	 */
+	public function __construct($settings = array())
 	{
 		$this->setOptions($settings);
-
-		if($controller !== null)
-			$this->Controller = $controller;
 	}
 
-	// seta as configurações
+	/**
+	 * seta as configurações
+	 *
+	 * @param array $options As mesmas opções do métod Mailer::sendMessage()
+	 * @return Mailer
+	 */
 	public function setOptions($options)
 	{
 		$this->options = Set::merge($this->options, $options);
@@ -56,20 +102,24 @@ class Mailer extends Object
 
 		if($this->options['template'])
 			$this->template = $this->options['template'];
+
+		return $this;
 	}
 
 	/*************** Begin utils funcions ***************/
 
 	/**
-	 * Send one or more message
+	 * Envia uma mensagem.
+	 * As opções 'to' e 'from' são obrigatórias para envio da mensagem.
 	 *
 	 * @param array $options índices válidos são:
-	 * 	 - 'to': string ou array com endereços de email do destinatário - REQUIRED
-	 * 	 - 'from': string com email do remetente visível - REQUIRED
-	 *   - 'sender': string ou array com endereço do remetente real - OPTIONAL
-	 * 	 - 'cc': string ou array com endereços de email das cópias - OPTIONAL
-	 *   - 'bcc': string ou array com endereços de email das cópias ocultas - OPTIONAL
-	 *   - 'body': string - OPTIONAL
+	 * 	 - 'to': string ou array com endereços de email do destinatário - OBRIGATÓRIO
+	 * 	 - 'from': string com email do remetente visível - OBRIGATÓRIO
+	 *   - 'sender': string ou array com endereço do remetente real - OPCIONAL
+	 * 	 - 'cc': string ou array com endereços de email das cópias - OPCIONAL
+	 *   - 'bcc': string ou array com endereços de email das cópias ocultas - OPCIONAL
+	 *   - 'subject': string com o assunto da mensagem - OPCIONAL
+	 *   - 'body': string - OPCIONAL
 	 *   - 'attachments': array
 	 *     - 'path': string
 	 *     - 'type': string
@@ -78,9 +128,6 @@ class Mailer extends Object
 	 */
 	public function sendMessage($options = array())
 	{
-		if(empty($options))
-			throw new CakeException(__('$options não pode estar vazio'));
-
 		if(!$this->__configureTransport())
 			throw new CakeException(__('Falha na configuração do transporte'));
 
@@ -89,10 +136,32 @@ class Mailer extends Object
 
 		return $this->sender->send($this->message, $this->failures);
 	}
+
 	/**************** End utils funcions ****************/
 
 
 	/****************** Begin setters *******************/
+
+	/**
+	 * Define uma variável para uso na view
+	 *
+	 * @param string $one Nome da variável
+	 * @param mixed $two Valor da variável
+	 */
+	public function set($one, $two = null)
+	{
+		if(is_array($one))
+		{
+			foreach($one as $k => $v)
+				$this->viewVars[$k] = $v;
+
+			return;
+		}
+
+		$this->viewVars[$one] = $two;
+
+		return $this;
+	}
 
 	/**
 	 * Habilita o plugin AntiFlood que permite interromper
@@ -104,7 +173,11 @@ class Mailer extends Object
 	 */
 	public function enableAntiFlood($limit = 100, $pause = 30)
 	{
+		$this->__configureTransport();
+
 		$this->sender->registerPlugin(new Swift_Plugins_AntiFloodPlugin($limit, $pause));
+
+		return $this;
 	}
 
 	/**
@@ -117,10 +190,14 @@ class Mailer extends Object
 	 */
 	public function enableThrottler($limit = 100, $type = 'message')
 	{
+		$this->__configureTransport();
+
 		if($type === 'message')
 			$this->sender->registerPlugin(new Swift_Plugins_ThrottlerPlugin($limit, Swift_Plugins_ThrottlerPlugin::MESSAGES_PER_MINUTE));
 		else
 			$this->sender->registerPlugin(new Swift_Plugins_ThrottlerPlugin($limit, Swift_Plugins_ThrottlerPlugin::BYTES_PER_MINUTE));
+
+		return $this;
 	}
 
 	/**
@@ -130,12 +207,11 @@ class Mailer extends Object
 	 */
 	public function setMessageSubject($value)
 	{
-		if($this->message === null)
-			throw new CakeException(__('Não é possível setar uma propriedade antes de criar uma mensagem'));
+		$this->__initMessage();
 
 		$this->message->setSubject($value);
 
-		return TRUE;
+		return $this;
 	}
 
 	/**
@@ -145,8 +221,9 @@ class Mailer extends Object
 	 */
 	public function setMessageBody($value, $replacements = array())
 	{
-		if($this->message === null)
-			throw new CakeException(__('Não é possível setar uma propriedade antes de criar uma mensagem'));
+		$this->__initMessage();
+
+		$this->__configureTransport();
 
 		$decorator = new Swift_Plugins_DecoratorPlugin($replacements);
 
@@ -157,7 +234,7 @@ class Mailer extends Object
 		else
 			$this->message->setBody($this->__render($value), 'text/plain');
 
-		return TRUE;
+		return $this;
 	}
 
 	/**
@@ -168,18 +245,41 @@ class Mailer extends Object
 	public function setMessagePart($value)
 	{
 		if($this->message === null)
-			throw new CakeException(__('Não é possível setar uma propriedade antes de criar uma mensagem'));
+			$this->__initMessage();
 
 		$this->message->setPart($value);
 
-		return TRUE;
+		return $this;
 	}
 	/******************* End setters *********************/
+
+	/**
+	 * Retorna dados da mensagem ou transporte
+	 *
+	 * @param string $attr
+	 * @return mixed
+	 */
+	public function __get($attr)
+	{
+		$getterName = 'get' . strtoupper($attr);
+
+		if(is_object($this->message) && method_exists($this->message, $getterName))
+			return $this->message->{$getterName}();
+
+		if(is_object($this->sender) && method_exists($this->sender, $getterName))
+			return $this->sender{$getterName}();
+
+		if(property_exists($this, $attr))
+			return $this->{$attr};
+
+		return null;
+	}
 
 
 	/*************** Begin internal utils ****************/
 
 	/**
+	 * Inicializar uma Mensagem
 	 *
 	 * @return bool
 	 */
@@ -192,75 +292,59 @@ class Mailer extends Object
 			return ($this->message != null);
 		}
 
-		return TRUE;
+		return true;
 	}
 
 	/**
 	 * Define todas as opções fornecidas como propriedades da mensagem
 	 * Se uma propriedade é Obrigatório, mas não está definida em $options, o método
-	 * aborta e retorna FALSE, caso contrário, retorna TRUE
+	 * aborta e retorna false, caso contrário, retorna true
 	 *
 	 * @param array $options - REQUIRED
 	 * @return bool
 	 */
 	private function __setMessageOptions($options = array())
 	{
-		$status = TRUE;
+		$status = true;
 
 		if(!$this->__initMessage())
 			throw new CakeException(__('Não é possível setar uma propriedade antes de criar uma mensagem'));
 
-		// define destinatário do email
+		// valida configuração, dispara uma exceção em caso de erro
+		$this->requiredOptions($options);
+
 		if(isset($options['to']))
 			$this->message->setTo($options['to']);
 
-		else
-		{
-			if(!isset($options['bcc']) && !isset($options['cc']))
-				throw new CakeException(__('É preciso definir o destinatário da mensagem'));
-		}
-		
-		// define origem efetiva do email
 		if(isset($options['sender']))
 			$this->message->setSender($options['sender']);
 
-		// define quem aparecerá como remetente da mensagem
 		if(isset($options['from']))
 		{
 			$this->message->setFrom($options['from']);
 
-			// define se será solicitado um email confirmando leitura
 			if(!empty($options['confirmReceipt']))
 				$this->message->setReadReceiptTo($options['from']);
-		
 		}
-		else if(!isset($options['sender']))
-			throw new CakeException(__('É preciso definir o remetente da mensagem'));
 
-		// define email's que receberam cópia-carbono
 		if(isset($options['cc']))
 			$status = ($status && $this->message->setCc($options['cc']));
 
-		// define email's que receberam cópia-carbono oculta
 		if(isset($options['bcc']))
 			$status = ($status && $this->message->setBcc($options['bcc']));
 
-		// define o assunto
 		if(isset($options['subject']))
 			$status = ($status && $this->setMessageSubject($options['subject']));
 
-		// define conteúdo da mensagem
 		if(isset($options['body']))
 		{
 			if(isset($options['replacements']))
 				$status = ($status && $this->setMessageBody($options['body'], $options['replacements']));
-		
+
 			else
 				$status = ($status && $this->setMessageBody($options['body']));
-		
 		}
 
-		// define tipo do conteúdo da mensagem
 		switch($this->options['contentType'])
 		{
 			case 'html':
@@ -271,7 +355,6 @@ class Mailer extends Object
 				break;
 		}
 
-		// adiciona anexos a mensagem, se houver algum
 		if(!empty($options['attachments']) && is_array($options['attachments']))
 			$status = ($status && $this->__attachFiles($options['attachments']));
 
@@ -292,18 +375,15 @@ class Mailer extends Object
 		{
 			if(isset($attach['path']) && isset($attach['type']))
 				$this->message->attach(Swift_Attachment::fromPath($attach['path'], $attach['type']));
-			
+
 			else if(isset($attach['path']))
 				$this->message->attach(Swift_Attachment::fromPath($attach['path']));
-			
+
 			else if(isset($attach['content']) && isset($attach['type']) && isset($attach['filename']))
 				$this->message->attach(Swift_Attachment::newInstance($attach['content'], $attach['filename'], $attach['type']));
-			
+
 			else
-			{
 				throw new CakeException(__('Algum anexo foi passado incorretamente.'));
-				return false;
-			}
 		}
 		return true;
 	}
@@ -324,7 +404,7 @@ class Mailer extends Object
 			if(!empty($this->options['smtp']['encryption']))
 				$transport =
 					Swift_SmtpTransport::newInstance($this->options['smtp']['host'], $this->options['smtp']['port'], $this->options['smtp']['encryption']);
-			
+
 			else
 				$transport =
 					Swift_SmtpTransport::newInstance($this->options['smtp']['host'], $this->options['smtp']['port']);
@@ -338,78 +418,60 @@ class Mailer extends Object
 		else if($this->options['transport'] == 'sendmail')
 			$transport =
 				Swift_SendmailTransport::newInstance($this->options['sendmail']['path'] . ' ' . $this->options['sendmail']['params']);
-		
+
 		else if($this->options['transport'] == 'php')
 			$transport = Swift_MailTransport::newInstance();
-		
+
 		else
 			throw new CakeException(__('Camada de transporte inválida'));
 
-		// Define a sender based on transport
 		$this->sender = new Swift_Mailer($transport);
 
-		return TRUE;
+		return true;
 	}
 
 	/**
-	 * Render the contents using the current layout and template.
-	 * Based on EmailComponent, part of CakePHP Framework
+	 * Renderiza uma view baseada no template e elemento configurado.
+	 * Baseado no CakeEmail, parte do Framework CakePHP.
 	 *
-	 * @copyright EmailComponent: CakePHP Foundation
+	 * @copyright CakeEmail: CakePHP Foundation
 	 * @link http://cakephp.org
 	 * @subpackage cake.libs.controllers.components.email
 	 * @license MIT
 	 *
 	 * @param string $content Conteúdo que será renderizado
 	 *
-	 * @return array Email ready to be sent
-	 * @access private
+	 * @return string Email ready to be sent
 	 */
 	private function __render($content)
 	{
 		$body = '';
 
-		if($this->Controller === null)
-		{
-			App::import('Core', 'Controller');
+		$View = new View(null);
 
-			$this->Controller = new Controller();
-		}
+		$View->viewVars = $this->viewVars;
 
-		$viewClass = $this->Controller->view;
+		list($templatePlugin, $template) = pluginSplit($this->template);
+		list($layoutPlugin, $layout) = pluginSplit($this->layout);
 
-		if ($this->Controller->view != 'View')
-		{
-			list($plugin, $viewClass) = pluginSplit($viewClass);
-			$viewClass = $viewClass . 'View';
-			App::import('View', $this->Controller->view);
-		}
+		if ($templatePlugin)
+			$View->plugin = $templatePlugin;
 
-		$View = new $viewClass($this->Controller);
-
-		$View->layout = $this->layout;
+		elseif ($layoutPlugin)
+			$View->plugin = $layoutPlugin;
 
 		if (is_array($content))
 			$content = implode("\n", $content) . "\n";
 
-		if ($this->options['contentType'] === 'html')
-		{
-			$View->layoutPath = 'email' . DS . 'html';
+		$View->set('content', $content);
+		$View->hasRendered = false;
+		$View->viewPath = $View->layoutPath = 'Emails' . DS . $this->options['contentType'];
 
-			$body = $View->element('email' . DS . 'html' . DS . $this->template, array('content' => $content), true);
+		$render = $View->render($template, $layout);
+		$body = str_replace(array("\r\n", "\r"), "\n", $render);
 
-			$body = str_replace(array("\r\n", "\r"), "\n", $View->renderLayout($body));
-
+		if($this->options['contentType'] === 'html')
 			$body = $this->__embedImages($body);
-		}
-		else if ($this->options['contentType'] === 'text')
-		{
-			$View->layoutPath = 'email' . DS . 'text';
-
-			$body = $View->element('email' . DS . 'text' . DS . $this->template, array('content' => $content), true);
-
-			$body = str_replace(array("\r\n", "\r"), "\n", $View->renderLayout($body));
-		}
 
 		return $body;
 	}
@@ -441,5 +503,30 @@ class Mailer extends Object
 		$content = $dom->saveHTML();
 
 		return $content;
+	}
+
+	/**
+	 * Valida as configurações obrigatórias, disparando
+	 * uma exceção quando alguma não é válida.
+	 *
+	 * @param array $options Configurações que serão validadas
+	 * @throws CakeException
+	 */
+	private function requiredOptions($options)
+	{
+		if(!isset($options['from']) && !isset($options['sender']))
+		{
+			$sender = $this->message->getSender() ?: $this->message->getFrom();
+
+			if(is_object($this->message) && empty($sender))
+				throw new CakeException(__('É preciso definir o remetente da mensagem'));
+		}
+
+		if(!isset($options['to']))
+		{
+			$to = $this->message->getTo();
+			if(is_object($this->message) && empty($to))
+				throw new CakeException(__('É preciso definir o destinatário da mensagem'));
+		}
 	}
 }
