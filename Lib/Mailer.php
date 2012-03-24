@@ -1,5 +1,5 @@
 <?php
-require_once(__DIR__ . DS . 'swiftmailer' . DS . 'lib' . DS . 'swift_required.php');
+require_once(APP . 'Plugin' . DS . 'Mailer' . DS . 'Vendor' . DS . 'swiftmailer' . DS . 'lib' . DS . 'swift_required.php');
 App::uses('View', 'View');
 /**
  * Biblioteca que funciona como um Wrapper para uso

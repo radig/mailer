@@ -1,5 +1,5 @@
 <?php
-App::uses('Mailer', 'Mailer.Vendor');
+App::uses('Mailer', 'Mailer.Lib');
 class TestMailer extends Mailer
 {
 	public function getSender()
