@@ -62,6 +62,32 @@ class MailerTest extends CakeTestCase
 		$this->Mailer = new TestMailer($settings);
 	}
 
+	protected function _resetMailerText()
+	{
+		$settings = array(
+			'transport' => 'php',
+			'contentType' => 'text',
+			'template' => 'default',
+			'layout' => 'Mailer.default',
+			'confirmReceipt' => true
+		);
+
+		$this->Mailer = new TestMailer($settings);
+	}
+
+	protected function _resetMailerNoTransport()
+	{
+		$settings = array(
+			'transport' => 'phpx',
+			'contentType' => 'text',
+			'template' => 'default',
+			'layout' => 'Mailer.default',
+			'confirmReceipt' => true
+		);
+
+		$this->Mailer = new TestMailer($settings);
+	}
+
 	public function testTemplate()
 	{
 		$this->assertSame($this->Mailer->getTemplate(), 'Mailer.default');
@@ -113,7 +139,8 @@ class MailerTest extends CakeTestCase
 	{
 		$options = array(
 			'to' => 'test@example.com',
-			'from' => 'test@example.org'
+			'from' => 'test@example.org',
+			'body' => 'Body message'
 		);
 
 		$this->assertSame($this->Mailer->sendMessage($options), 1);
@@ -170,6 +197,41 @@ class MailerTest extends CakeTestCase
 	public function testBasicSets()
 	{
 		$this->_resetMailer();
+		$this->Mailer->setMessageSubject('Test subject')
+					->setMessageBody('Uhull');
+
+		$this->assertSame($this->Mailer->subject, 'Test subject');
+
+		$options = array(
+			'to' => 'test@example.com',
+			'from' => 'test@example.org'
+		);
+
+		$this->assertSame($this->Mailer->sendMessage($options), 1);
+	}
+
+	public function testBasicSetsText()
+	{
+		$this->_resetMailerText();
+		$this->Mailer->setMessageSubject('Test subject')
+					->setMessageBody('Uhull');
+
+		$this->assertSame($this->Mailer->subject, 'Test subject');
+
+		$options = array(
+			'to' => 'test@example.com',
+			'from' => 'test@example.org'
+		);
+
+		$this->assertSame($this->Mailer->sendMessage($options), 1);
+	}
+
+	/**
+	 * @expectedException CakeException
+	 */
+	public function testBasicSetsNoTransport()
+	{
+		$this->_resetMailerNoTransport();
 		$this->Mailer->setMessageSubject('Test subject')
 					->setMessageBody('Uhull');
 

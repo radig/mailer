@@ -402,12 +402,10 @@ class Mailer extends Object
 		if($this->options['transport'] == 'smtp')
 		{
 			if(!empty($this->options['smtp']['encryption']))
-				$transport =
-					Swift_SmtpTransport::newInstance($this->options['smtp']['host'], $this->options['smtp']['port'], $this->options['smtp']['encryption']);
+				$transport = Swift_SmtpTransport::newInstance($this->options['smtp']['host'], $this->options['smtp']['port'], $this->options['smtp']['encryption']);
 
 			else
-				$transport =
-					Swift_SmtpTransport::newInstance($this->options['smtp']['host'], $this->options['smtp']['port']);
+				$transport = Swift_SmtpTransport::newInstance($this->options['smtp']['host'], $this->options['smtp']['port']);
 
 			if(isset($this->options['smtp']['username']))
 				$transport->setUsername($this->options['smtp']['username']);
@@ -416,8 +414,7 @@ class Mailer extends Object
 				$transport->setPassword($this->options['smtp']['password']);
 		}
 		else if($this->options['transport'] == 'sendmail')
-			$transport =
-				Swift_SendmailTransport::newInstance($this->options['sendmail']['path'] . ' ' . $this->options['sendmail']['params']);
+			$transport = Swift_SendmailTransport::newInstance($this->options['sendmail']['path'] . ' ' . $this->options['sendmail']['params']);
 
 		else if($this->options['transport'] == 'php')
 			$transport = Swift_MailTransport::newInstance();
@@ -453,7 +450,7 @@ class Mailer extends Object
 
 		list($templatePlugin, $template) = pluginSplit($this->template);
 		list($layoutPlugin, $layout) = pluginSplit($this->layout);
-
+		
 		if ($templatePlugin)
 			$View->plugin = $templatePlugin;
 
@@ -468,6 +465,7 @@ class Mailer extends Object
 		$View->viewPath = $View->layoutPath = 'Emails' . DS . $this->options['contentType'];
 
 		$render = $View->render($template, $layout);
+
 		$body = str_replace(array("\r\n", "\r"), "\n", $render);
 
 		if($this->options['contentType'] === 'html')
