@@ -1,5 +1,6 @@
 <?php
 require_once(APP . 'Plugin' . DS . 'Mailer' . DS . 'Vendor' . DS . 'swiftmailer' . DS . 'lib' . DS . 'swift_required.php');
+
 App::uses('View', 'View');
 /**
  * Biblioteca que funciona como um Wrapper para uso
@@ -134,7 +135,7 @@ class Mailer extends Object
 		if(!$this->__setMessageOptions($options))
 			throw new CakeException(__('Falha na definição da mensagem'));
 
-		return $this->sender->send($this->message, $this->failures);
+		return  $this->sender->send($this->message, $this->failures);
 	}
 
 	/**************** End utils funcions ****************/
@@ -246,8 +247,8 @@ class Mailer extends Object
 	{
 		if($this->message === null)
 			$this->__initMessage();
-
-		$this->message->setPart($value);
+		
+		$this->message->addPart($value);
 
 		return $this;
 	}
@@ -399,14 +400,14 @@ class Mailer extends Object
 		if(!$override && $this->sender !== null)
 			return $this->sender;
 
-		if($this->options['transport'] == 'smtp')
+		if($this->options['transport'] === 'smtp')
 		{
 			if(!empty($this->options['smtp']['encryption']))
 				$transport = Swift_SmtpTransport::newInstance($this->options['smtp']['host'], $this->options['smtp']['port'], $this->options['smtp']['encryption']);
 
 			else
 				$transport = Swift_SmtpTransport::newInstance($this->options['smtp']['host'], $this->options['smtp']['port']);
-
+			
 			if(isset($this->options['smtp']['username']))
 				$transport->setUsername($this->options['smtp']['username']);
 
@@ -436,7 +437,7 @@ class Mailer extends Object
 	 * @subpackage cake.libs.controllers.components.email
 	 * @license MIT
 	 *
-	 * @param string $content Conteúdo que será renderizado
+	 * @param string $content Conteúdo que será renderizaçãoizado
 	 *
 	 * @return string Email ready to be sent
 	 */
@@ -467,7 +468,7 @@ class Mailer extends Object
 		$render = $View->render($template, $layout);
 
 		$body = str_replace(array("\r\n", "\r"), "\n", $render);
-
+		
 		if($this->options['contentType'] === 'html')
 			$body = $this->__embedImages($body);
 
@@ -490,11 +491,11 @@ class Mailer extends Object
 		$dom->loadHtml($content);
 
 		$imgs = $dom->getElementsByTagName('img');
-
+		
 		foreach($imgs as $img)
 		{
 			$src = Swift_Image::fromPath($img->getAttribute('src'));
-
+			
 			$img->setAttribute('src', $this->message->embed($src));
 		}
 

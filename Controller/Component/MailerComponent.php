@@ -55,23 +55,6 @@ class MailerComponent extends Component
 		$this->_Mailer->setOptions($options);
 	}
 
-	/************** Begin callbacks section ***************/
-
-	// executado após Controller::beforeFilter()
-	public function startup(&$controller) {}
-
-	// executado antes de Controller::beforeRender()
-	public function beforeRender(&$controller) {}
-
-	// executado após Controller::render()
-	public function shutdown(&$controller)	{}
-
-	// executado antes de Controller::redirect()
-	public function beforeRedirect(&$controller, $url, $status=null, $exit=true) {}
-
-	/************** End callbacks section ***************/
-
-
 	/*************** Begin utils funcions ***************/
 
 	/**

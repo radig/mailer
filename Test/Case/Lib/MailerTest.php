@@ -1,5 +1,8 @@
 <?php
+require_once(APP . 'Plugin' . DS . 'Mailer' . DS . 'Vendor' . DS . 'swiftmailer' . DS . 'lib' . DS . 'swift_required.php');
+
 App::uses('Mailer', 'Mailer.Lib');
+
 class TestMailer extends Mailer
 {
 	public function getSender()
@@ -88,6 +91,46 @@ class MailerTest extends CakeTestCase
 		$this->Mailer = new TestMailer($settings);
 	}
 
+	protected function _resetMailerSmtp()
+	{
+		$settings = array(
+			'transport' => 'smtp',
+			'contentType' => 'html',
+			'template' => 'Mailer.default',
+			'layout' => 'default',
+			'smtp' => array(
+						'host' => '127.0.0.1',
+						'port' => '130',
+						'encryption' => 'tls',
+						'username' =>'user',
+						'password' => 'user'
+				),
+			'confirmReceipt' => true
+		);
+		
+		$this->Mailer = new TestMailer($settings);
+	}
+
+	protected function _resetMailerSmtpNoEnc()
+	{
+		$settings = array(
+			'transport' => 'smtp',
+			'contentType' => 'html',
+			'template' => 'Mailer.default',
+			'layout' => 'default',
+			'smtp' => array(
+				'host' => '127.0.0.1',
+				'port' => '130',
+				'encryption' => null,
+				'username' =>'user',
+				'password' => 'user'
+			),
+			'confirmReceipt' => true
+		);
+		
+		$this->Mailer = new TestMailer($settings);
+	}
+
 	public function testTemplate()
 	{
 		$this->assertSame($this->Mailer->getTemplate(), 'Mailer.default');
@@ -152,9 +195,6 @@ class MailerTest extends CakeTestCase
 		$this->assertSame($this->Mailer->from, null);
 	}
 
-	/**
-	 *
-	 */
 	public function testSendMessageBasicOptions()
 	{
 		$options = array(
@@ -224,6 +264,7 @@ class MailerTest extends CakeTestCase
 		);
 
 		$this->assertSame($this->Mailer->sendMessage($options), 1);
+
 	}
 
 	/**
@@ -270,5 +311,111 @@ class MailerTest extends CakeTestCase
 
 		$this->assertSame($this->Mailer->enableAntiFlood(50, 10), $this->Mailer);
 		$this->assertSame($this->Mailer->enableThrottler(50, 'whatever'), $this->Mailer);
+	}
+
+
+	public function testSetMessagePart()
+	{
+		$this->_resetMailer();
+		$this->Mailer->setMessageSubject('Test subject')
+					->setMessageBody('Uhull <img src="'.ROOT.DS.APP_DIR.'/webroot/img/smile.jpg"> ');
+
+		$options = array(
+			'to' => 'test@example.com',
+			'from' => 'test@example.org'
+		);
+		
+		$this->Mailer->setMessagePart("Texto puro, text/plain");
+
+		$this->assertSame($this->Mailer->sendMessage($options), 1);
+	}
+
+	public function testSendAttFile()
+	{
+		$this->_resetMailer();
+		$options = array(
+			'to' => 'test@example.com',
+			'from' => 'test@example.org',
+			'body' => 'Body message',
+			'attachments' => array(
+					array(
+							'path'=> ROOT.DS.APP_DIR.'/webroot/img/smile.jpg',
+							'type' => null,
+							'filename' => 'smile.jpg'
+							),
+					array(
+					 		'path'=> ROOT.DS.APP_DIR.'/webroot/img/cake.icon.png',
+					 		'type' => 'png',
+							'filename' => 'cake.icon.png'
+							),
+					array(
+							'path'=> null,
+							'type' => 'jpg',
+							'filename' => 'smile.jpg',
+							'content' => 'smile'
+							)
+			)
+		);
+
+		$this->assertSame($this->Mailer->sendMessage($options), 1);
+	}
+
+	/**
+	 * @expectedException CakeException
+	 */
+	public function testSendAttFileException()
+	{
+		$this->_resetMailer();
+		$options = array(
+			'to' => 'test@example.com',
+			'from' => 'test@example.org',
+			'body' => 'Body message',
+			'attachments' => array(
+					array(
+							'path'=> null,
+							'type' => 'jpg',
+							'filename' => null,
+							'content' => 'smile'
+							)
+			)
+		);
+
+		$this->assertSame($this->Mailer->sendMessage($options), 1);
+	}
+
+	/**
+	 *
+	 * @expectedException PHPUnit_Framework_Error
+	 */
+	public function testTransportSmtp()
+	{
+		$this->_resetMailerSmtp();
+		$this->Mailer->setMessageSubject('Test subject')
+					->setMessageBody('Uhull <img src="' . ROOT . DS . APP_DIR . '/webroot/img/smile.jpg"> ');
+
+		$options = array(
+			'to' => 'test@example.com',
+			'from' => 'test@example.org'
+		);
+
+		$this->assertSame($this->Mailer->sendMessage($options), 1);
+	}
+
+	/**
+	 *
+	 * @expectedException PHPUnit_Framework_Error
+	 */
+	public function testTransportSmtpNoEnc()
+	{
+		$this->_resetMailerSmtpNoEnc();
+		$this->Mailer->setMessageSubject('Test subject')
+					->setMessageBody('Uhull <img src="'.ROOT.DS.APP_DIR.'/webroot/img/smile.jpg"> ');
+
+		$options = array(
+			'to' => 'test@example.com',
+			'from' => 'test@example.org'
+		);
+
+		$this->assertSame($this->Mailer->sendMessage($options), 1);
 	}
 }
