@@ -1,14 +1,15 @@
 <?php
-App::uses('Mailer', 'Mailer.Vendor');
+App::uses('Component', 'Controller');
+App::uses('Mailer', 'Mailer.Lib');
 /**
  * Componente que constrói um Menu baseado nas permissões
  * do usuário.
  *
- * @package		radig.Menu.Controller.Component
+ * @package			radig.Menu.Controller.Component
  * @copyright		Radig Soluções em TI
  * @author			Radig Dev Team - suporte@radig.com.br
- * @version		2.0
- * @license		Vide arquivo LICENCA incluído no pacote
+ * @version			2.0
+ * @license			Vide arquivo LICENCA incluído no pacote
  * @link			http://radig.com.br
  */
 class MailerComponent extends Component

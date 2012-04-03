@@ -79,6 +79,19 @@ class Mailer extends Object
 	 */
 	public $options = array();
 
+	/**
+	 * Configurações padrão da Lib
+	 *
+	 * @var array
+	 */
+	protected $defaultOptions = array(
+		'transport' => 'php',
+		'contentType' => 'html',
+		'template' => 'Mailer.default',
+		'layout' => 'default',
+		'confirmReceipt' => false
+	);
+
 
 	/**
 	 * construtor default
@@ -96,7 +109,7 @@ class Mailer extends Object
 	 */
 	public function setOptions($options)
 	{
-		$this->options = Set::merge($this->options, $options);
+		$this->options = Set::merge($this->defaultOptions, $options);
 
 		if($this->options['layout'])
 			$this->layout = $this->options['layout'];
