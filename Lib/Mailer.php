@@ -1,14 +1,17 @@
 <?php
-require_once(APP . 'Plugin' . DS . 'Mailer' . DS . 'Vendor' . DS . 'swiftmailer' . DS . 'lib' . DS . 'swift_required.php');
-
 App::uses('View', 'View');
+App::uses('CakePlugin', 'Core');
+
+$path = CakePlugin::path('Mailer');
+require_once($path . DS . 'Vendor' . DS . 'swiftmailer' . DS . 'lib' . DS . 'swift_required.php');
+
 /**
  * Biblioteca que funciona como um Wrapper para uso
  * do SwiftMailer junto ao CakePHP.
  *
  * Suporta versão 2.x do CakePHP
  *
- * @copyright  Radig Soluções em Ti (http://radig.com.br)
+ * @copyright  Radig Soluções em TI (http://radig.com.br)
  * @license  MIT License
  */
 class Mailer extends Object
@@ -94,7 +97,9 @@ class Mailer extends Object
 
 
 	/**
-	 * construtor default
+	 * Construtor padrão
+	 *
+	 * @param array $settings
 	 */
 	public function __construct($settings = array())
 	{
@@ -119,8 +124,6 @@ class Mailer extends Object
 
 		return $this;
 	}
-
-	/*************** Begin utils funcions ***************/
 
 	/**
 	 * Envia uma mensagem.
@@ -151,11 +154,6 @@ class Mailer extends Object
 		return  $this->sender->send($this->message, $this->failures);
 	}
 
-	/**************** End utils funcions ****************/
-
-
-	/****************** Begin setters *******************/
-
 	/**
 	 * Define uma variável para uso na view
 	 *
@@ -184,6 +182,8 @@ class Mailer extends Object
 	 *
 	 * @param int $limit limite de envio em sequência
 	 * @param int $pause tempo de pausa em segundos
+	 *
+	 * @return Mailer
 	 */
 	public function enableAntiFlood($limit = 100, $pause = 30)
 	{
@@ -201,6 +201,7 @@ class Mailer extends Object
 	 * @param int $limit Limite de mensagens ou bytes
 	 * @param string $type Tipo de limite, valores válidos são: 'message' e 'bytes'
 	 *
+	 * @return Mailer
 	 */
 	public function enableThrottler($limit = 100, $type = 'message')
 	{
@@ -215,9 +216,10 @@ class Mailer extends Object
 	}
 
 	/**
+	 * Define o assunto da mensagem
 	 *
 	 * @param string $value
-	 * @return bool
+	 * @return Mailer
 	 */
 	public function setMessageSubject($value)
 	{
@@ -229,9 +231,10 @@ class Mailer extends Object
 	}
 
 	/**
+	 * Define o corpo da mensagem
 	 *
 	 * @param string $value
-	 * @return bool
+	 * @return Mailer
 	 */
 	public function setMessageBody($value, $replacements = array())
 	{
@@ -252,20 +255,20 @@ class Mailer extends Object
 	}
 
 	/**
+	 * Define uma parte genérica da mensagem
 	 *
 	 * @param string $value
-	 * @return bool
+	 * @return Mailer
 	 */
 	public function setMessagePart($value)
 	{
 		if($this->message === null)
 			$this->__initMessage();
-		
+
 		$this->message->addPart($value);
 
 		return $this;
 	}
-	/******************* End setters *********************/
 
 	/**
 	 * Retorna dados da mensagem ou transporte
@@ -288,9 +291,6 @@ class Mailer extends Object
 
 		return null;
 	}
-
-
-	/*************** Begin internal utils ****************/
 
 	/**
 	 * Inicializar uma Mensagem
@@ -315,6 +315,7 @@ class Mailer extends Object
 	 * aborta e retorna false, caso contrário, retorna true
 	 *
 	 * @param array $options - REQUIRED
+	 * @throws CakeException
 	 * @return bool
 	 */
 	private function __setMessageOptions($options = array())
@@ -377,11 +378,15 @@ class Mailer extends Object
 
 	/**
 	 * Adiciona anexos à mensagem
+	 *
 	 * @param array $attachments
 	 * 		path: caminho para o arquivo
 	 * 		type: mime type do arquivo
 	 * 		content: conteudo do arquivo (no anexo de conteúdo dinâmico)
 	 * 		filename: nome do arquivo de conteúdo dinâmico que será anexado â mensagem
+	 *
+	 * @throws CakeException
+	 * @return bool
 	 */
 	private function __attachFiles($attachments = array())
 	{
@@ -399,6 +404,7 @@ class Mailer extends Object
 			else
 				throw new CakeException(__('Algum anexo foi passado incorretamente.'));
 		}
+
 		return true;
 	}
 
@@ -406,6 +412,7 @@ class Mailer extends Object
 	 * Recupera parâmetros relacionados ao transporte em Mailer::options
 	 * e inicia a class Swift_Transport
 	 *
+	 * @param bool $override Se deve ou não sobrescrever as configurações atuais
 	 * @return bool
 	 */
 	private function __configureTransport($override = false)
@@ -415,12 +422,12 @@ class Mailer extends Object
 
 		if($this->options['transport'] === 'smtp')
 		{
-			if(!empty($this->options['smtp']['encryption']))
-				$transport = Swift_SmtpTransport::newInstance($this->options['smtp']['host'], $this->options['smtp']['port'], $this->options['smtp']['encryption']);
+			if(!empty($this->options['smtp']['encryptation']))
+				$transport = Swift_SmtpTransport::newInstance($this->options['smtp']['host'], $this->options['smtp']['port'], $this->options['smtp']['encryptation']);
 
 			else
 				$transport = Swift_SmtpTransport::newInstance($this->options['smtp']['host'], $this->options['smtp']['port']);
-			
+
 			if(isset($this->options['smtp']['username']))
 				$transport->setUsername($this->options['smtp']['username']);
 
@@ -450,8 +457,7 @@ class Mailer extends Object
 	 * @subpackage cake.libs.controllers.components.email
 	 * @license MIT
 	 *
-	 * @param string $content Conteúdo que será renderizaçãoizado
-	 *
+	 * @param string $content Conteúdo que será renderizado
 	 * @return string Email ready to be sent
 	 */
 	private function __render($content)
@@ -464,7 +470,7 @@ class Mailer extends Object
 
 		list($templatePlugin, $template) = pluginSplit($this->template);
 		list($layoutPlugin, $layout) = pluginSplit($this->layout);
-		
+
 		if ($templatePlugin)
 			$View->plugin = $templatePlugin;
 
@@ -481,7 +487,7 @@ class Mailer extends Object
 		$render = $View->render($template, $layout);
 
 		$body = str_replace(array("\r\n", "\r"), "\n", $render);
-		
+
 		if($this->options['contentType'] === 'html')
 			$body = $this->__embedImages($body);
 
@@ -494,7 +500,6 @@ class Mailer extends Object
 	 * de 'anexo' inline
 	 *
 	 * @param string $content
-	 *
 	 * @return string $content
 	 */
 	private function __embedImages($content)
@@ -504,11 +509,11 @@ class Mailer extends Object
 		$dom->loadHtml($content);
 
 		$imgs = $dom->getElementsByTagName('img');
-		
+
 		foreach($imgs as $img)
 		{
 			$src = Swift_Image::fromPath($img->getAttribute('src'));
-			
+
 			$img->setAttribute('src', $this->message->embed($src));
 		}
 

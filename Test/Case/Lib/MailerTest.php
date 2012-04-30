@@ -1,7 +1,9 @@
 <?php
-require_once(APP . 'Plugin' . DS . 'Mailer' . DS . 'Vendor' . DS . 'swiftmailer' . DS . 'lib' . DS . 'swift_required.php');
-
 App::uses('Mailer', 'Mailer.Lib');
+App::uses('CakePlugin', 'Core');
+
+$path = CakePlugin::path('Mailer');
+require_once($path . DS . 'Vendor' . DS . 'swiftmailer' . DS . 'lib' . DS . 'swift_required.php');
 
 class TestMailer extends Mailer
 {
@@ -40,9 +42,13 @@ class MailerTest extends CakeTestCase
 {
 	public $Mailer;
 
+	public $pluginPath;
+
 	public function setUp()
 	{
 		parent::setUp();
+
+		$this->pluginPath = CakePlugin::path('Mailer');
 
 		$this->_resetMailer();
 	}
@@ -107,7 +113,7 @@ class MailerTest extends CakeTestCase
 				),
 			'confirmReceipt' => true
 		);
-		
+
 		$this->Mailer = new TestMailer($settings);
 	}
 
@@ -127,7 +133,7 @@ class MailerTest extends CakeTestCase
 			),
 			'confirmReceipt' => true
 		);
-		
+
 		$this->Mailer = new TestMailer($settings);
 	}
 
@@ -318,13 +324,13 @@ class MailerTest extends CakeTestCase
 	{
 		$this->_resetMailer();
 		$this->Mailer->setMessageSubject('Test subject')
-					->setMessageBody('Uhull <img src="'.ROOT.DS.APP_DIR.'/webroot/img/smile.jpg"> ');
+					->setMessageBody('Uhull <img src="' . $this->pluginPath . DS . 'tmp/cake.power.gif">');
 
 		$options = array(
 			'to' => 'test@example.com',
 			'from' => 'test@example.org'
 		);
-		
+
 		$this->Mailer->setMessagePart("Texto puro, text/plain");
 
 		$this->assertSame($this->Mailer->sendMessage($options), 1);
@@ -338,22 +344,22 @@ class MailerTest extends CakeTestCase
 			'from' => 'test@example.org',
 			'body' => 'Body message',
 			'attachments' => array(
-					array(
-							'path'=> ROOT.DS.APP_DIR.'/webroot/img/smile.jpg',
-							'type' => null,
-							'filename' => 'smile.jpg'
-							),
-					array(
-					 		'path'=> ROOT.DS.APP_DIR.'/webroot/img/cake.icon.png',
-					 		'type' => 'png',
-							'filename' => 'cake.icon.png'
-							),
-					array(
-							'path'=> null,
-							'type' => 'jpg',
-							'filename' => 'smile.jpg',
-							'content' => 'smile'
-							)
+				array(
+					'path'=>  $this->pluginPath . DS . 'tmp/cake.power.gif',
+					'type' => null,
+					'filename' => 'smile.gif'
+				),
+				array(
+			 		'path'=>  $this->pluginPath . DS . 'tmp/cake.power.gif',
+			 		'type' => 'png',
+					'filename' => 'cake.gif'
+				),
+				array(
+					'path'=> null,
+					'type' => 'jpg',
+					'filename' => 'smile.jpg',
+					'content' => 'smile'
+				)
 			)
 		);
 
@@ -371,12 +377,12 @@ class MailerTest extends CakeTestCase
 			'from' => 'test@example.org',
 			'body' => 'Body message',
 			'attachments' => array(
-					array(
-							'path'=> null,
-							'type' => 'jpg',
-							'filename' => null,
-							'content' => 'smile'
-							)
+				array(
+					'path'=> null,
+					'type' => 'jpg',
+					'filename' => null,
+					'content' => 'smile'
+				)
 			)
 		);
 
