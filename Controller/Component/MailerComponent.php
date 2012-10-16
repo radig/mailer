@@ -37,10 +37,10 @@ class MailerComponent extends Component
 	 * @param Controller $controller
 	 * @param array $settings
 	 */
-	public function initialize(&$controller)
+	public function initialize(Controller $controller)
 	{
 		// salva referência do controlador para uso futuro
-		$this->Controller =& $controller;
+		$this->Controller = $controller;
 
 		// instância a lib de envio de mensagem
 		$this->_Mailer = new Mailer($this->settings);
