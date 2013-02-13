@@ -19,7 +19,7 @@ bc. 'Mailer.Mailer'
 
 Já para uso direto da lib (em um modelo, shell ou outra parte da aplicação), você deve fazer a importação da classe
 
-bc. App::import('Vendor', 'Mailer.Mailer');
+bc. App::uses('Mailer', 'Mailer.Lib');
 
 E então instanciar a classe
 
