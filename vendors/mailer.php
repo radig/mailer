@@ -84,6 +84,8 @@ class Mailer extends Object
 	 * @param array $options índices válidos são:
 	 * 	 - 'to': string ou array com endereços de email do destinatário - REQUIRED
 	 * 	 - 'from': string com email do remetente - REQUIRED
+	 * 	 - 'sender': string com email do remetente físico (REAL), precedência sobre o anterior - OPTIONAL
+	 * 	 - 'replyTo': string com email de quem receberá as respostas da mensagem
 	 * 	 - 'cc': string ou array com endereços de email das cópias - OPTIONAL
 	 *   - 'bcc': string ou array com endereços de email das cópias ocultas - OPTIONAL
 	 *   - 'body': string - OPTIONAL
@@ -297,6 +299,12 @@ class Mailer extends Object
 			trigger_error(__('É preciso definir o remetente da mensagem', TRUE), E_USER_ERROR);
 
 			return FALSE;
+		}
+
+		// define email de resposta
+		if(isset($options['replyTo']))
+		{
+			$status = ($status && $this->message->setReplyTo($options['replyTo']));	
 		}
 
 		// define email's que receberam cópia-carbono
